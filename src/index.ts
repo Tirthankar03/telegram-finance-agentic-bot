@@ -1,6 +1,4 @@
 import { Hono } from 'hono'
-// import { serve } from '@hono/node-server' // For Node.js compatibility if needed, optional with Bun
-
 import { google } from 'googleapis'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import TelegramBot from 'node-telegram-bot-api'
@@ -11,6 +9,7 @@ import axios from 'axios'
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg'
 import { fileURLToPath } from 'url'
 import Groq from 'groq-sdk'
+
 
 
 // Define __dirname for ES modules
@@ -47,6 +46,40 @@ const sheets = google.sheets({ version: 'v4', auth })
 
 // Your Google Sheet ID
 const SPREADSHEET_ID = '14rsZut8E-eBzZvIcEvohE7ahdwUwGgbn1GmMNpiwUHU'
+
+// Function to convert text to speech using ElevenLabs
+async function textToSpeech(text: string, chatId: string | number): Promise<string> {
+    const outputPath = path.join(__dirname, `voice_response_${chatId}_${Date.now()}.mp3`)
+    try {
+        const response = await axios({
+            method: 'POST',
+            url: 'https://api.elevenlabs.io/v1/text-to-speech/5UK7mqtKP0xl505xNPZG', // Default voice ID, replace with your preferred voice ID from ElevenLabs
+            headers: {
+                'xi-api-key': process.env['ELEVENLABS_API_KEY'],
+                'Content-Type': 'application/json',
+            },
+            data: {
+                text: text,
+                model_id: 'eleven_monolingual_v1',
+                voice_settings: {
+                    stability: 0.5,
+                    similarity_boost: 0.5,
+                },
+            },
+            responseType: 'stream',
+        })
+
+        const writer = fs.createWriteStream(outputPath)
+        response.data.pipe(writer)
+
+        return new Promise((resolve, reject) => {
+            writer.on('finish', () => resolve(outputPath))
+            writer.on('error', (err) => reject(new Error('Error writing audio file: ' + err.message)))
+        })
+    } catch (error) {
+        throw new Error('Error with ElevenLabs API: ' + (error as Error).message)
+    }
+}
 
 // Existing Functions
 async function infer_category(description: string): Promise<string> {
@@ -561,6 +594,8 @@ bot.on('message', async (msg) => {
     console.log("userquery>>>", userQuery)
     if (!userQuery) return
 
+    let audioPath: string | undefined
+
     try {
         const response = await fetch(`${process.env['PROD_URL']}/finance`, {
             method: 'POST',
@@ -570,11 +605,20 @@ bot.on('message', async (msg) => {
 
         const data = await response.json()
         const botResponse = data.response || 'Sorry, I couldn’t process your request.'
-        
-        bot.sendMessage(chatId, botResponse)
+
+        // Send text response
+        await bot.sendMessage(chatId, botResponse)
+
+        // Generate and send voice response
+        audioPath = await textToSpeech(botResponse, chatId)
+        await bot.sendVoice(chatId, audioPath)
     } catch (error) {
         console.error('Error handling Telegram message:', error)
-        bot.sendMessage(chatId, 'An error occurred while processing your request.')
+        await bot.sendMessage(chatId, 'An error occurred while processing your request.')
+    } finally {
+        if (audioPath && fs.existsSync(audioPath)) {
+            fs.unlinkSync(audioPath)
+        }
     }
 })
 
@@ -583,10 +627,10 @@ bot.on('voice', async (msg) => {
     const chatId = msg.chat.id
     const fileId = msg.voice.file_id
 
-    let oggPath: string | undefined, mp3Path: string | undefined
+    let oggPath: string | undefined, mp3Path: string | undefined, audioPath: string | undefined
 
     try {
-        bot.sendMessage(chatId, 'Processing your voice message...')
+        await bot.sendMessage(chatId, 'Processing your voice message...')
 
         oggPath = await downloadFile(fileId, chatId)
         console.log("OGG file downloaded:", oggPath)
@@ -609,17 +653,23 @@ bot.on('voice', async (msg) => {
 
         const data = await response.json()
         const botResponse = data.response || 'Sorry, I couldn’t process your request.'
-        
-        bot.sendMessage(chatId, `You said: "${transcribedText}"\nResponse: ${botResponse}`)
+
+        // Send text response with transcribed text
+        await bot.sendMessage(chatId, `You said: "${transcribedText}"\nResponse: ${botResponse}`)
+
+        // Generate and send voice response
+        audioPath = await textToSpeech(botResponse, chatId)
+        await bot.sendVoice(chatId, audioPath)
     } catch (error) {
         console.error('Error handling Telegram voice message:', error)
-        bot.sendMessage(chatId, 'An error occurred while processing your voice message: ' + (error as Error).message)
+        await bot.sendMessage(chatId, 'An error occurred while processing your voice message: ' + (error as Error).message)
     } finally {
         if (oggPath && fs.existsSync(oggPath)) fs.unlinkSync(oggPath)
         if (mp3Path && fs.existsSync(mp3Path)) fs.unlinkSync(mp3Path)
+        if (audioPath && fs.existsSync(audioPath)) fs.unlinkSync(audioPath)
     }
 })
 
-// Start the server (Bun handles this natively, no need for serve in most cases)
+// Start the server
 console.log(`Server running at http://localhost:3000`)
 export default app
