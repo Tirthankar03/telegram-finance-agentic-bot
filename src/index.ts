@@ -562,7 +562,7 @@ bot.on('message', async (msg) => {
     if (!userQuery) return
 
     try {
-        const response = await fetch(`http://localhost:3000/finance`, {
+        const response = await fetch(`${process.env['PROD_URL']}/finance`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query: userQuery })
