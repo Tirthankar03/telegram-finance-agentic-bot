@@ -601,7 +601,7 @@ bot.on('voice', async (msg) => {
         const transcribedText = await transcribeAudio(mp3Path)
         console.log("transcribedText>>>>>", transcribedText)
 
-        const response = await fetch(`http://localhost:3000/finance`, {
+        const response = await fetch(`${process.env['PROD_URL']}/finance`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query: transcribedText })
