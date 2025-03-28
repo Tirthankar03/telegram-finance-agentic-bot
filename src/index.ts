@@ -77,7 +77,8 @@ async function textToSpeech(text: string, chatId: string | number): Promise<stri
             writer.on('error', (err) => reject(new Error('Error writing audio file: ' + err.message)))
         })
     } catch (error) {
-        throw new Error('Error with ElevenLabs API: ' + (error as Error).message)
+        console.log("error in textToSpeech>>>>>", error)
+        throw new Error('Error with ElevenLabs API: ' + error)
     }
 }
 
