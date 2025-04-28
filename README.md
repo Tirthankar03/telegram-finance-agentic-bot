@@ -10,7 +10,8 @@ An **Agentic AI-powered** Telegram bot that acts as your **personal finance assi
 
 Watch the bot in action:  
 📽️ [Click to view the demo](https://drive.google.com/file/d/1Tjz2w8yU94yBK5MAH4Jo9M9d_tOuPFwx/view?usp=sharing)
-
+🤖 [Try it out yourself!](https://t.me/cashhelp07_bot)
+📊 [Google Sheet used](https://docs.google.com/spreadsheets/d/1ghGxHKYcoVHa3JAEvnU0K9pzTlxciBvYv8-nj-_X8r8/edit?gid=179851451#gid=179851451)
 ---
 
 ## 📦 Features
