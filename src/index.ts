@@ -633,6 +633,14 @@ bot.on('message', async (msg) => {
 
 // Telegram Bot Integration for Voice
 bot.on('voice', async (msg) => {
+
+    try {
+        await fetch(`${process.env['PROD_URL']}/`)
+        console.log("Server ping successful")
+    } catch (error) {
+        console.error('Error pinging server:', error)
+    }
+    
     const chatId = msg.chat.id
     const fileId = msg.voice.file_id
 
