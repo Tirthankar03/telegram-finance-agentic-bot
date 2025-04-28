@@ -587,6 +587,14 @@ async function transcribeAudio(filePath: string): Promise<string> {
 
 // Telegram Bot Integration for Text
 bot.on('message', async (msg) => {
+
+    // Make a request to the root endpoint to keep the server active
+    try {
+        await fetch(`${process.env['PROD_URL']}/`)
+        console.log("Server ping successful")
+    } catch (error) {
+        console.error('Error pinging server:', error)
+    }
     if (msg.voice) return
     const chatId = msg.chat.id
     console.log("chatId>>>", chatId)
