@@ -45,7 +45,7 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: 'v4', auth })
 
 // Your Google Sheet ID
-const SPREADSHEET_ID = '14rsZut8E-eBzZvIcEvohE7ahdwUwGgbn1GmMNpiwUHU'
+const SPREADSHEET_ID = '1ghGxHKYcoVHa3JAEvnU0K9pzTlxciBvYv8-nj-_X8r8'
 
 // Function to convert text to speech using ElevenLabs
 async function textToSpeech(text: string, chatId: string | number): Promise<string> {
@@ -610,9 +610,9 @@ bot.on('message', async (msg) => {
         // Send text response
         await bot.sendMessage(chatId, botResponse)
 
-        // Generate and send voice response
-        audioPath = await textToSpeech(botResponse, chatId)
-        await bot.sendVoice(chatId, audioPath)
+        // // Generate and send voice response
+        // audioPath = await textToSpeech(botResponse, chatId)
+        // await bot.sendVoice(chatId, audioPath)
     } catch (error) {
         console.error('Error handling Telegram message:', error)
         await bot.sendMessage(chatId, 'An error occurred while processing your request.')
@@ -656,11 +656,11 @@ bot.on('voice', async (msg) => {
         const botResponse = data.response || 'Sorry, I couldn’t process your request.'
 
         // Send text response with transcribed text
-        await bot.sendMessage(chatId, `You said: "${transcribedText}"\nResponse: ${botResponse}`)
+        await bot.sendMessage(chatId, botResponse)
 
-        // Generate and send voice response
-        audioPath = await textToSpeech(botResponse, chatId)
-        await bot.sendVoice(chatId, audioPath)
+        // // Generate and send voice response
+        // audioPath = await textToSpeech(botResponse, chatId)
+        // await bot.sendVoice(chatId, audioPath)
     } catch (error) {
         console.error('Error handling Telegram voice message:', error)
         await bot.sendMessage(chatId, 'An error occurred while processing your voice message: ' + (error as Error).message)
